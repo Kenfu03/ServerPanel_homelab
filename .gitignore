@@ -1,0 +1,23 @@
+# Secrets / environment variables
+.env
+.env.*
+!.env.example
+
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local/cache files
+.cache/
+.local/
+
+# Shell/Python history
+.bash_history
+.python_history
+
+# Logs
+*.log
