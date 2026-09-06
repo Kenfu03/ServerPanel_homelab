@@ -12,7 +12,7 @@ from mctools import RCONClient
 
 app = FastAPI()
 
-load_dotenv("/opt/mcpanel/.env")
+load_dotenv("/opt/mcpanel/backend/.env")
 
 RCON_HOST = os.getenv("RCON_HOST", "127.0.0.1")
 RCON_PORT = int(os.getenv("RCON_PORT", "25575"))
