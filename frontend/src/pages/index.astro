@@ -2,26 +2,11 @@
 import Layout from "../layouts/Layout.astro";
 import ServerCard from "../components/ServerCard.astro";
 import Sidebar from "../components/Sidebar.astro";
+import { createUnavailableMinecraftServer } from "../lib/minecraft";
 import type { GameServer } from "../types/server";
 
 const servers: GameServer[] = [
-	{
-		id: "minecraft",
-		name: "Minecraft",
-		game: "Minecraft",
-		version: "26.1.2",
-		online: true,
-		players: {
-			online: 2,
-			max: 20,
-			names: [],
-		},
-		metrics: {
-			uptimeSeconds: 8040,
-			memoryMb: 4403.2,
-			cpuPercent: 49.8,
-		},
-	},
+	createUnavailableMinecraftServer(),
 	{
 		id: "terraria",
 		name: "Terraria",
@@ -61,6 +46,8 @@ const servers: GameServer[] = [
 			</div>
 		</main>
 	</div>
+
+	<script src="../scripts/minecraft-status.ts"></script>
 </Layout>
 
 <style>

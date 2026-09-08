@@ -1,5 +1,6 @@
 ---
 import MetricCard from "./MetricCard.astro";
+import { getServerDisplayValues } from "../lib/server-format";
 import type { GameServer } from "../types/server";
 
 interface Props {
@@ -7,29 +8,13 @@ interface Props {
 }
 
 const { server } = Astro.props;
-const { name, game, version, online, players, metrics } = server;
+const { id, name, game, version, online } = server;
 
 const gameLabel = version ? `${game} ${version}` : game;
-const playerCount = online ? `${players.online} / ${players.max}` : "--";
-
-const formatUptime = (totalSeconds: number): string => {
-	const totalMinutes = Math.floor(totalSeconds / 60);
-	const hours = Math.floor(totalMinutes / 60);
-	const minutes = totalMinutes % 60;
-
-	return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-};
-
-const formatMemory = (memoryMb: number): string => {
-	return memoryMb >= 1024 ? `${(memoryMb / 1024).toFixed(1)} GB` : `${memoryMb} MB`;
-};
-
-const uptime = online ? formatUptime(metrics.uptimeSeconds) : "--";
-const memory = online ? formatMemory(metrics.memoryMb) : "--";
-const cpu = online ? `${metrics.cpuPercent}%` : "--";
+const displayValues = getServerDisplayValues(server);
 ---
 
-<article class:list={["server-card", { offline: !online }]}>
+<article class:list={["server-card", { offline: !online }]} data-server-id={id}>
 	<header class="server-header">
 		<div>
 			<p class="game-label">{gameLabel}</p>
@@ -49,14 +34,14 @@ const cpu = online ? `${metrics.cpuPercent}%` : "--";
 		</div>
 		<div>
 			<span>Players</span>
-			<strong>{playerCount}</strong>
+			<strong data-player-count>{displayValues.players}</strong>
 		</div>
 	</div>
 
 	<div class="metrics">
-		<MetricCard label="Uptime" value={uptime} />
-		<MetricCard label="RAM" value={memory} />
-		<MetricCard label="CPU" value={cpu} />
+		<MetricCard label="Uptime" value={displayValues.uptime} dataKey="uptime" />
+		<MetricCard label="RAM" value={displayValues.memory} dataKey="memory" />
+		<MetricCard label="CPU" value={displayValues.cpu} dataKey="cpu" />
 	</div>
 
 	<footer>

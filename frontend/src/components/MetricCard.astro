@@ -2,12 +2,13 @@
 interface Props {
 	label: string;
 	value: string;
+	dataKey?: string;
 }
 
-const { label, value } = Astro.props;
+const { label, value, dataKey } = Astro.props;
 ---
 
-<div class="metric">
+<div class="metric" data-metric={dataKey}>
 	<span>{label}</span>
 	<strong>{value}</strong>
 </div>
