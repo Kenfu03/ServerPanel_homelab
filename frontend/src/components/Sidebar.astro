@@ -1,0 +1,234 @@
+---
+const navigationItems = ["Game Servers", "Server Info", "Server IPs"];
+---
+
+<aside class="sidebar" aria-label="Main navigation">
+	<div>
+		<a class="brand" href="/" aria-label="Kenek's Homelab dashboard">
+			<span class="brand-mark" aria-hidden="true">
+				<svg viewBox="0 0 40 40" fill="none">
+					<path d="M11 29V16.5L20 11l9 5.5V29" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+					<path d="M15.5 29v-8h9v8M8 29h24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+					<circle cx="20" cy="17" r="1.5" fill="currentColor" />
+				</svg>
+			</span>
+			<span class="brand-copy">
+				<span class="eyebrow">Welcome to</span>
+				<span class="brand-name">Kenek's Homelab</span>
+			</span>
+		</a>
+
+		<nav class="navigation" aria-label="Homelab sections">
+			<p class="navigation-label">Menu</p>
+			<ul>
+				{navigationItems.map((item, index) => (
+					<li>
+						<a
+							class:list={["navigation-link", { selected: index === 0 }]}
+							href={index === 0 ? "/" : "#"}
+							aria-current={index === 0 ? "page" : undefined}
+						>
+							<span>{item}</span>
+							<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+								<path d="m7.5 5 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+						</a>
+					</li>
+				))}
+			</ul>
+		</nav>
+	</div>
+
+	<div class="homelab-status" role="status">
+		<span class="status-dot" aria-hidden="true"></span>
+		<div>
+			<p>Homelab online</p>
+			<span>All systems operational</span>
+		</div>
+	</div>
+</aside>
+
+<style>
+	.sidebar {
+		position: fixed;
+		inset: 0 auto 0 0;
+		z-index: 10;
+		display: flex;
+		width: 17.5rem;
+		min-height: 100vh;
+		min-height: 100dvh;
+		flex-direction: column;
+		justify-content: space-between;
+		border-right: 1px solid var(--border);
+		background: var(--surface-sidebar);
+		padding: 2.25rem 1.5rem 1.5rem;
+	}
+
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 0.875rem;
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.brand-mark {
+		display: grid;
+		width: 3.5rem;
+		height: 3.5rem;
+		flex: none;
+		place-items: center;
+		border: 1px solid var(--border-strong);
+		border-radius: 999px;
+		background: var(--surface-raised);
+		color: var(--text-primary);
+		box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+	}
+
+	.brand-mark svg {
+		width: 2.25rem;
+		height: 2.25rem;
+	}
+
+	.brand-copy {
+		display: grid;
+		gap: 0.2rem;
+	}
+
+	.eyebrow,
+	.navigation-label {
+		color: var(--text-muted);
+		font-size: 0.72rem;
+		font-weight: 600;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+	}
+
+	.brand-name {
+		font-size: 1.05rem;
+		font-weight: 650;
+		letter-spacing: -0.015em;
+	}
+
+	.navigation {
+		margin-top: 4rem;
+	}
+
+	.navigation-label {
+		margin: 0 0 0.75rem 0.85rem;
+	}
+
+	.navigation ul {
+		display: grid;
+		gap: 0.35rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.navigation-link {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border: 1px solid transparent;
+		border-radius: 0.65rem;
+		padding: 0.8rem 0.85rem;
+		color: var(--text-secondary);
+		font-size: 0.9rem;
+		font-weight: 550;
+		text-decoration: none;
+		transition: 160ms ease;
+	}
+
+	.navigation-link svg {
+		width: 1rem;
+		height: 1rem;
+		color: var(--text-subtle);
+		transition: transform 160ms ease;
+	}
+
+	.navigation-link:hover {
+		border-color: var(--border);
+		background: var(--surface-hover);
+		color: var(--text-primary);
+	}
+
+	.navigation-link:hover svg {
+		transform: translateX(2px);
+	}
+
+	.navigation-link.selected {
+		border-color: var(--border-strong);
+		background: var(--surface-raised);
+		color: var(--text-primary);
+		box-shadow: 0 6px 20px rgb(0 0 0 / 12%);
+	}
+
+	.homelab-status {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.7rem;
+		border-top: 1px solid var(--border);
+		padding: 1.25rem 0.5rem 0.25rem;
+	}
+
+	.status-dot {
+		width: 0.55rem;
+		height: 0.55rem;
+		margin-top: 0.3rem;
+		flex: none;
+		border-radius: 999px;
+		background: var(--online);
+		box-shadow: 0 0 0 4px rgb(52 211 153 / 10%);
+	}
+
+	.homelab-status p {
+		margin: 0;
+		font-size: 0.84rem;
+		font-weight: 600;
+	}
+
+	.homelab-status div > span {
+		display: block;
+		margin-top: 0.2rem;
+		color: var(--text-muted);
+		font-size: 0.72rem;
+	}
+
+	@media (max-width: 760px) {
+		.sidebar {
+			position: relative;
+			width: 100%;
+			min-height: auto;
+			border-right: 0;
+			border-bottom: 1px solid var(--border);
+			padding: 1.25rem;
+		}
+
+		.navigation {
+			margin-top: 1.5rem;
+		}
+
+		.navigation ul {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+
+		.navigation-label,
+		.navigation-link svg,
+		.homelab-status {
+			display: none;
+		}
+
+		.navigation-link {
+			justify-content: center;
+			padding-inline: 0.5rem;
+			text-align: center;
+		}
+	}
+
+	@media (max-width: 430px) {
+		.navigation-link {
+			font-size: 0.78rem;
+		}
+	}
+</style>

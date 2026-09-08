@@ -1,17 +1,139 @@
 ---
+import Layout from "../layouts/Layout.astro";
+import ServerCard from "../components/ServerCard.astro";
+import Sidebar from "../components/Sidebar.astro";
+import type { GameServer } from "../types/server";
 
+const servers: GameServer[] = [
+	{
+		id: "minecraft",
+		name: "Minecraft",
+		game: "Minecraft",
+		version: "26.1.2",
+		online: true,
+		players: {
+			online: 2,
+			max: 20,
+			names: [],
+		},
+		metrics: {
+			uptimeSeconds: 8040,
+			memoryMb: 4403.2,
+			cpuPercent: 49.8,
+		},
+	},
+	{
+		id: "terraria",
+		name: "Terraria",
+		game: "Terraria",
+		online: false,
+		players: {
+			online: 0,
+			max: 8,
+			names: [],
+		},
+		metrics: {
+			uptimeSeconds: 0,
+			memoryMb: 0,
+			cpuPercent: 0,
+		},
+	},
+];
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="Game Servers | Kenek's Homelab">
+	<div class="dashboard-shell">
+		<Sidebar />
+
+		<main>
+			<div class="dashboard-content">
+				<header class="page-header">
+					<div>
+						<p>Game Servers</p>
+						<h1>Dashboard</h1>
+					</div>
+					<span class="server-count">{servers.length} servers</span>
+				</header>
+
+				<section class="server-grid" aria-label="Game servers">
+					{servers.map((server) => <ServerCard server={server} />)}
+				</section>
+			</div>
+		</main>
+	</div>
+</Layout>
+
+<style>
+	main {
+		min-height: 100vh;
+		margin-left: 17.5rem;
+	}
+
+	.dashboard-content {
+		width: min(100%, 78rem);
+		padding: 4.5rem clamp(2rem, 5vw, 5rem);
+	}
+
+	.page-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1.5rem;
+		margin-bottom: 2.5rem;
+	}
+
+	.page-header p {
+		margin: 0 0 0.55rem;
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.page-header h1 {
+		margin: 0;
+		font-size: clamp(2rem, 3vw, 2.8rem);
+		font-weight: 640;
+		letter-spacing: -0.045em;
+		line-height: 1;
+	}
+
+	.server-count {
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: rgb(255 255 255 / 1.5%);
+		padding: 0.45rem 0.75rem;
+		color: var(--text-muted);
+		font-size: 0.72rem;
+		font-weight: 600;
+	}
+
+	.server-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1.25rem;
+	}
+
+	@media (max-width: 1040px) {
+		.server-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	@media (max-width: 760px) {
+		main {
+			margin-left: 0;
+		}
+
+		.dashboard-content {
+			padding: 2.75rem 1.25rem;
+		}
+	}
+
+	@media (max-width: 420px) {
+		.server-count {
+			display: none;
+		}
+	}
+</style>
