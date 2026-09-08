@@ -4,6 +4,7 @@ import subprocess
 import time
 import psutil
 
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
@@ -11,6 +12,17 @@ from mctools import RCONClient
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:4321",
+        "http://127.0.0.1:4321",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 load_dotenv("/opt/mcpanel/backend/.env")
 
