@@ -39,11 +39,21 @@ const navigationItems = ["Game Servers", "Server Info", "Server IPs"];
 		</nav>
 	</div>
 
-	<div class="homelab-status" role="status">
-		<span class="status-dot" aria-hidden="true"></span>
-		<div>
-			<p>Homelab online</p>
-			<span>All systems operational</span>
+	<div class="sidebar-footer">
+		<div class="user-session">
+			<div>
+				<p data-current-user-name>Loading...</p>
+				<span data-current-user-access>Checking access</span>
+			</div>
+			<button type="button" data-sign-out>Sign out</button>
+		</div>
+
+		<div class="homelab-status" role="status">
+			<span class="status-dot" aria-hidden="true"></span>
+			<div>
+				<p>Homelab online</p>
+				<span>All systems operational</span>
+			</div>
 		</div>
 	</div>
 </aside>
@@ -172,6 +182,43 @@ const navigationItems = ["Game Servers", "Server Info", "Server IPs"];
 		padding: 1.25rem 0.5rem 0.25rem;
 	}
 
+	.user-session {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		border-top: 1px solid var(--border);
+		padding: 1rem 0.5rem;
+	}
+
+	.user-session p {
+		margin: 0;
+		font-size: 0.84rem;
+		font-weight: 650;
+	}
+
+	.user-session span {
+		display: block;
+		margin-top: 0.2rem;
+		color: var(--text-muted);
+		font-size: 0.7rem;
+	}
+
+	.user-session button {
+		border: 0;
+		background: transparent;
+		padding: 0.35rem;
+		color: var(--text-muted);
+		font-size: 0.7rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: color 160ms ease;
+	}
+
+	.user-session button:hover {
+		color: var(--text-primary);
+	}
+
 	.status-dot {
 		width: 0.55rem;
 		height: 0.55rem;
@@ -215,7 +262,7 @@ const navigationItems = ["Game Servers", "Server Info", "Server IPs"];
 
 		.navigation-label,
 		.navigation-link svg,
-		.homelab-status {
+		.sidebar-footer {
 			display: none;
 		}
 

@@ -27,7 +27,7 @@ const servers: GameServer[] = [
 ---
 
 <Layout title="Game Servers | Kenek's Homelab">
-	<div class="dashboard-shell">
+	<div class="dashboard-shell" data-protected-content hidden>
 		<Sidebar />
 
 		<main>
@@ -47,6 +47,7 @@ const servers: GameServer[] = [
 		</main>
 	</div>
 
+	<script src="../scripts/auth-session.ts"></script>
 	<script src="../scripts/minecraft-status.ts"></script>
 </Layout>
 

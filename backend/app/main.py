@@ -4,12 +4,29 @@ import subprocess
 import time
 import psutil
 
+from fastapi import Depends, Response, status as http_status
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from mctools import RCONClient
 
+from .auth import (
+    AdminLoginRequest,
+    IdentityRequest,
+    RESERVED_ADMIN_USERNAME,
+    SessionUser,
+    clear_session_cookie,
+    get_session_user,
+    is_reserved_admin_name,
+    normalize_name,
+    require_user,
+    set_session_cookie,
+    verify_admin_password,
+)
+
+
+load_dotenv("/opt/mcpanel/backend/.env")
 
 app = FastAPI()
 
@@ -23,8 +40,6 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
-
-load_dotenv("/opt/mcpanel/backend/.env")
 
 RCON_HOST = os.getenv("RCON_HOST", "127.0.0.1")
 RCON_PORT = int(os.getenv("RCON_PORT", "25575"))
@@ -166,18 +181,72 @@ def status():
         **metrics,
     }
 
+
+@app.post("/api/auth/identify")
+def identify(payload: IdentityRequest, response: Response):
+    if is_reserved_admin_name(payload.name):
+        clear_session_cookie(response)
+        return {"requires_password": True, "user": None}
+
+    user = SessionUser(
+        display_name=payload.name,
+        normalized_name=normalize_name(payload.name),
+        is_admin=False,
+    )
+    set_session_cookie(response, user)
+    return {
+        "requires_password": False,
+        "user": {"name": user.display_name, "is_admin": user.is_admin},
+    }
+
+
+@app.post("/api/auth/login")
+def login(payload: AdminLoginRequest, response: Response):
+    if not is_reserved_admin_name(payload.name) or not verify_admin_password(payload.password):
+        error_response = JSONResponse(
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Invalid credentials"},
+        )
+        clear_session_cookie(error_response)
+        return error_response
+
+    user = SessionUser(
+        display_name="Kenek",
+        normalized_name=RESERVED_ADMIN_USERNAME,
+        is_admin=True,
+    )
+    set_session_cookie(response, user)
+    return {"authenticated": True, "name": user.display_name, "is_admin": True}
+
+
+@app.get("/api/auth/me")
+def current_user(request_user: SessionUser | None = Depends(get_session_user)):
+    if request_user is None:
+        return {"authenticated": False, "name": None, "is_admin": False}
+    return {
+        "authenticated": True,
+        "name": request_user.display_name,
+        "is_admin": request_user.is_admin,
+    }
+
+
+@app.post("/api/auth/logout")
+def logout(response: Response):
+    clear_session_cookie(response)
+    return {"success": True}
+
 @app.post("/api/start")
-def start():
+def start(_user: SessionUser = Depends(require_user)):
     return {"success": minecraft_command("start")}
 
 
 @app.post("/api/stop")
-def stop():
+def stop(_user: SessionUser = Depends(require_user)):
     return {"success": minecraft_command("stop")}
 
 
 @app.post("/api/restart")
-def restart():
+def restart(_user: SessionUser = Depends(require_user)):
     return {"success": minecraft_command("restart")}
 
 

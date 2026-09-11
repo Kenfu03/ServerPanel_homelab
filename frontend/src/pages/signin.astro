@@ -1,0 +1,184 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Sign in | MCPanel">
+	<main class="identity-page" data-identity-page>
+		<div class="identity-shell">
+			<div class="brand-mark" aria-hidden="true">
+				<svg viewBox="0 0 40 40" fill="none">
+					<path d="M11 29V16.5L20 11l9 5.5V29" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+					<path d="M15.5 29v-8h9v8M8 29h24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+					<circle cx="20" cy="17" r="1.5" fill="currentColor" />
+				</svg>
+			</div>
+			<p class="product-name">MCPanel</p>
+
+			<header>
+				<h1 data-welcome-heading>Welcome to the Homelab</h1>
+				<p data-welcome-copy>Enter your name to continue.</p>
+			</header>
+
+			<section class="identity-card">
+				<form data-name-form novalidate>
+					<label for="identity-name">Name</label>
+					<input id="identity-name" name="name" type="text" autocomplete="nickname" maxlength="40" placeholder="Angie" required autofocus />
+					<p class="form-error" data-name-error role="alert" hidden></p>
+					<button type="submit">Continue</button>
+				</form>
+
+				<form data-password-form novalidate hidden>
+					<label for="admin-password">Password</label>
+					<input id="admin-password" name="password" type="password" autocomplete="current-password" maxlength="1024" required />
+					<p class="form-error" data-password-error role="alert" hidden></p>
+					<button type="submit">Sign in</button>
+					<button class="alternate-button" type="button" data-use-another-name>← Use another name</button>
+				</form>
+			</section>
+
+			<div class="connection-status">
+				<span aria-hidden="true"></span>
+				Homelab connected
+			</div>
+		</div>
+	</main>
+
+	<script src="../scripts/signin.ts"></script>
+</Layout>
+
+<style>
+	.identity-page {
+		display: grid;
+		min-height: 100vh;
+		min-height: 100dvh;
+		place-items: center;
+		padding: 2rem 1.25rem;
+	}
+
+	.identity-shell {
+		width: min(100%, 27rem);
+		text-align: center;
+	}
+
+	.brand-mark {
+		display: grid;
+		width: 3.5rem;
+		height: 3.5rem;
+		margin: 0 auto 0.75rem;
+		place-items: center;
+		border: 1px solid var(--border-strong);
+		border-radius: 999px;
+		background: var(--surface-raised);
+		box-shadow: 0 10px 30px rgb(0 0 0 / 24%);
+	}
+
+	.brand-mark svg { width: 2.2rem; height: 2.2rem; }
+
+	.product-name {
+		margin: 0;
+		font-size: 0.78rem;
+		font-weight: 750;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+
+	header { margin: 2.25rem 0 1.5rem; }
+
+	h1 {
+		margin: 0;
+		font-size: clamp(1.75rem, 5vw, 2.2rem);
+		font-weight: 640;
+		letter-spacing: -0.04em;
+	}
+
+	header p {
+		margin: 0.75rem 0 0;
+		color: var(--text-muted);
+		font-size: 0.9rem;
+	}
+
+	.identity-card {
+		border: 1px solid var(--border-strong);
+		border-radius: 1rem;
+		background: var(--surface-card);
+		padding: 1.5rem;
+		box-shadow: 0 20px 55px rgb(0 0 0 / 22%);
+		text-align: left;
+	}
+
+	form[hidden] { display: none; }
+
+	label {
+		display: block;
+		margin-bottom: 0.5rem;
+		color: var(--text-secondary);
+		font-size: 0.75rem;
+		font-weight: 650;
+	}
+
+	input {
+		width: 100%;
+		border: 1px solid var(--border-strong);
+		border-radius: 0.7rem;
+		background: #0d0f11;
+		padding: 0.8rem 0.9rem;
+		color: var(--text-primary);
+		outline: none;
+		transition: border-color 160ms ease, box-shadow 160ms ease;
+	}
+
+	input:focus {
+		border-color: #50545d;
+		box-shadow: 0 0 0 3px rgb(255 255 255 / 4%);
+	}
+
+	.form-error {
+		margin: 0.65rem 0 0;
+		color: #fca5a5;
+		font-size: 0.78rem;
+	}
+
+	form > button[type="submit"] {
+		width: 100%;
+		margin-top: 1rem;
+		border: 1px solid var(--border-strong);
+		border-radius: 0.7rem;
+		background: var(--surface-raised);
+		padding: 0.8rem 1rem;
+		color: var(--text-primary);
+		font-size: 0.82rem;
+		font-weight: 650;
+		cursor: pointer;
+	}
+
+	form > button:disabled { cursor: wait; opacity: 0.6; }
+
+	.alternate-button {
+		display: block;
+		margin: 1rem auto 0;
+		border: 0;
+		background: transparent;
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		cursor: pointer;
+	}
+
+	.alternate-button:hover { color: var(--text-primary); }
+
+	.connection-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 1.25rem;
+		color: var(--text-muted);
+		font-size: 0.72rem;
+	}
+
+	.connection-status span {
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 999px;
+		background: var(--online);
+		box-shadow: 0 0 0 4px rgb(52 211 153 / 9%);
+	}
+</style>

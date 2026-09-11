@@ -13,3 +13,27 @@ export interface MinecraftActionResponse {
 }
 
 export type MinecraftAction = "start" | "stop" | "restart";
+
+export interface AuthUserResponse {
+	name: string;
+	is_admin: boolean;
+}
+
+export interface IdentifyResponse {
+	requires_password: boolean;
+	user: AuthUserResponse | null;
+}
+
+export interface AuthenticatedSessionResponse {
+	authenticated: true;
+	name: string;
+	is_admin: boolean;
+}
+
+export interface AnonymousSessionResponse {
+	authenticated: false;
+	name: null;
+	is_admin: false;
+}
+
+export type SessionResponse = AuthenticatedSessionResponse | AnonymousSessionResponse;

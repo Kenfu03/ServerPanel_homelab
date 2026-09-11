@@ -8,7 +8,7 @@ import { minecraftIdentity } from "../../lib/minecraft";
 ---
 
 <Layout title="Minecraft Server | Kenek's Homelab">
-	<div class="dashboard-shell" data-minecraft-management>
+	<div class="dashboard-shell" data-minecraft-management data-protected-content hidden>
 		<Sidebar />
 
 		<main>
@@ -47,6 +47,7 @@ import { minecraftIdentity } from "../../lib/minecraft";
 		</main>
 	</div>
 
+	<script src="../../scripts/auth-session.ts"></script>
 	<script src="../../scripts/minecraft-management.ts"></script>
 </Layout>
 

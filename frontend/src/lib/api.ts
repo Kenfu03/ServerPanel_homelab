@@ -2,10 +2,13 @@ import type {
 	MinecraftAction,
 	MinecraftActionResponse,
 	MinecraftStatusResponse,
+	IdentifyResponse,
 } from "../types/api";
+import type { CurrentUser } from "../types/auth";
 
 const STATUS_REQUEST_TIMEOUT_MS = 4_000;
 const ACTION_REQUEST_TIMEOUT_MS = 30_000;
+const API_REQUEST_CREDENTIALS: RequestCredentials = "include";
 
 const isFiniteNumber = (value: unknown): value is number => {
 	return typeof value === "number" && Number.isFinite(value);
@@ -37,11 +40,32 @@ const getApiBaseUrl = (): string => {
 		throw new Error("PUBLIC_API_URL is not configured");
 	}
 
-	return apiBaseUrl.replace(/\/+$/, "");
+	return import.meta.env.DEV ? "" : apiBaseUrl.replace(/\/+$/, "");
+};
+
+const apiFetch = (path: string, init: RequestInit = {}): Promise<Response> => {
+	return fetch(`${getApiBaseUrl()}${path}`, {
+		...init,
+		credentials: API_REQUEST_CREDENTIALS,
+	});
+};
+
+const isAuthUserResponse = (value: unknown): value is IdentifyResponse["user"] => {
+	if (value === null) return true;
+	if (typeof value !== "object") return false;
+	const user = value as Record<string, unknown>;
+	return typeof user.name === "string" && typeof user.is_admin === "boolean";
+};
+
+const readJson = async (response: Response, requestName: string): Promise<unknown> => {
+	if (!response.ok) {
+		throw new Error(`${requestName} failed with HTTP ${response.status}`);
+	}
+	return response.json();
 };
 
 export const getMinecraftStatus = async (): Promise<MinecraftStatusResponse> => {
-	const response = await fetch(`${getApiBaseUrl()}/api/status`, {
+	const response = await apiFetch("/api/status", {
 		headers: {
 			Accept: "application/json",
 		},
@@ -65,7 +89,7 @@ export const getMinecraftStatus = async (): Promise<MinecraftStatusResponse> => 
 const sendMinecraftAction = async (
 	action: MinecraftAction,
 ): Promise<MinecraftActionResponse> => {
-	const response = await fetch(`${getApiBaseUrl()}/api/${action}`, {
+	const response = await apiFetch(`/api/${action}`, {
 		method: "POST",
 		headers: {
 			Accept: "application/json",
@@ -105,3 +129,74 @@ export const stopMinecraftServer = (): Promise<MinecraftActionResponse> =>
 
 export const restartMinecraftServer = (): Promise<MinecraftActionResponse> =>
 	sendMinecraftAction("restart");
+
+export const identifyUser = async (name: string): Promise<IdentifyResponse> => {
+	const response = await apiFetch("/api/auth/identify", {
+		method: "POST",
+		headers: { "Content-Type": "application/json", Accept: "application/json" },
+		body: JSON.stringify({ name }),
+		signal: AbortSignal.timeout(STATUS_REQUEST_TIMEOUT_MS),
+	});
+	const data = await readJson(response, "Identity request");
+
+	if (typeof data !== "object" || data === null) {
+		throw new Error("Identity response has an unexpected shape");
+	}
+	const result = data as Record<string, unknown>;
+	if (typeof result.requires_password !== "boolean" || !isAuthUserResponse(result.user)) {
+		throw new Error("Identity response has an unexpected shape");
+	}
+	return {
+		requires_password: result.requires_password,
+		user: result.user,
+	};
+};
+
+export const loginAdmin = async (name: string, password: string): Promise<CurrentUser> => {
+	const response = await apiFetch("/api/auth/login", {
+		method: "POST",
+		headers: { "Content-Type": "application/json", Accept: "application/json" },
+		body: JSON.stringify({ name, password }),
+		signal: AbortSignal.timeout(STATUS_REQUEST_TIMEOUT_MS),
+	});
+	const data = await readJson(response, "Admin sign-in");
+
+	if (typeof data !== "object" || data === null) {
+		throw new Error("Admin sign-in response has an unexpected shape");
+	}
+	const result = data as Record<string, unknown>;
+	if (result.authenticated !== true || typeof result.name !== "string" || result.is_admin !== true) {
+		throw new Error("Admin sign-in response has an unexpected shape");
+	}
+	return { name: result.name, isAdmin: true };
+};
+
+export const getCurrentUser = async (): Promise<CurrentUser | null> => {
+	const response = await apiFetch("/api/auth/me", {
+		headers: { Accept: "application/json" },
+		cache: "no-store",
+		signal: AbortSignal.timeout(STATUS_REQUEST_TIMEOUT_MS),
+	});
+	const data = await readJson(response, "Session request");
+
+	if (typeof data !== "object" || data === null) {
+		throw new Error("Session response has an unexpected shape");
+	}
+	const result = data as Record<string, unknown>;
+	if (result.authenticated === false && result.name === null && result.is_admin === false) {
+		return null;
+	}
+	if (result.authenticated === true && typeof result.name === "string" && typeof result.is_admin === "boolean") {
+		return { name: result.name, isAdmin: result.is_admin };
+	}
+	throw new Error("Session response has an unexpected shape");
+};
+
+export const logoutUser = async (): Promise<void> => {
+	const response = await apiFetch("/api/auth/logout", {
+		method: "POST",
+		headers: { Accept: "application/json" },
+		signal: AbortSignal.timeout(STATUS_REQUEST_TIMEOUT_MS),
+	});
+	await readJson(response, "Sign out request");
+};
