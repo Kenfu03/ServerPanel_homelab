@@ -1,0 +1,147 @@
+---
+import ConfirmationModal from "./ConfirmationModal.astro";
+---
+
+<section class="control-card" aria-labelledby="server-control-heading" data-server-controls>
+	<p class="section-label" id="server-control-heading">Server Control</p>
+
+	<div class="normal-controls" data-normal-controls hidden>
+		<button class="control-button start" data-action="start">Start Server</button>
+		<button class="control-button restart" data-open-confirmation="restart">Restart Server</button>
+		<button class="control-button stop" data-open-confirmation="stop">Stop Server</button>
+	</div>
+
+	<div class="operation-state" data-operation-state>
+		<span class="spinner" aria-hidden="true"></span>
+		<div>
+			<strong data-operation-label>Checking server...</strong>
+			<p data-operation-message>Contacting the Minecraft server.</p>
+		</div>
+	</div>
+
+	<div class="control-error" data-control-error hidden>
+		<strong>Server action needs attention</strong>
+		<p data-error-message></p>
+		<button data-refresh-state>Refresh State</button>
+	</div>
+
+	<ConfirmationModal action="restart" />
+	<ConfirmationModal action="stop" />
+</section>
+
+<style>
+	.control-card {
+		border: 1px solid var(--border-strong);
+		border-radius: 1rem;
+		background: var(--surface-card);
+		padding: 1.5rem;
+	}
+
+	.section-label {
+		margin: 0 0 1.25rem;
+		color: var(--text-muted);
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.normal-controls {
+		display: flex;
+		gap: 0.75rem;
+	}
+
+	.normal-controls[hidden],
+	.operation-state[hidden],
+	.control-error[hidden] {
+		display: none;
+	}
+
+	.control-button,
+	.control-error button {
+		border: 1px solid var(--border-strong);
+		border-radius: 0.7rem;
+		background: var(--surface-raised);
+		padding: 0.8rem 1.2rem;
+		color: var(--text-primary);
+		font-size: 0.82rem;
+		font-weight: 650;
+		cursor: pointer;
+		transition: 160ms ease;
+	}
+
+	.control-button:hover,
+	.control-error button:hover {
+		border-color: #4b5059;
+		background: var(--surface-hover);
+	}
+
+	.control-button.start {
+		border-color: rgb(52 211 153 / 28%);
+		background: rgb(52 211 153 / 9%);
+		color: #6ee7b7;
+	}
+
+	.control-button.stop {
+		border-color: rgb(248 113 113 / 28%);
+		color: #fca5a5;
+	}
+
+	.operation-state {
+		display: flex;
+		align-items: center;
+		gap: 0.9rem;
+		min-height: 3.25rem;
+	}
+
+	.operation-state strong,
+	.control-error strong {
+		font-size: 0.9rem;
+		letter-spacing: 0.02em;
+	}
+
+	.operation-state p,
+	.control-error p {
+		margin: 0.25rem 0 0;
+		color: var(--text-muted);
+		font-size: 0.8rem;
+	}
+
+	.spinner {
+		width: 1.25rem;
+		height: 1.25rem;
+		flex: none;
+		border: 2px solid var(--border-strong);
+		border-top-color: var(--text-secondary);
+		border-radius: 999px;
+		animation: spin 850ms linear infinite;
+	}
+
+	.control-error {
+		border: 1px solid rgb(248 113 113 / 20%);
+		border-radius: 0.7rem;
+		background: rgb(248 113 113 / 6%);
+		padding: 1rem;
+	}
+
+	.control-error strong {
+		color: #fca5a5;
+	}
+
+	.control-error button {
+		margin-top: 1rem;
+		padding: 0.6rem 0.85rem;
+	}
+
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.spinner { animation: none; }
+	}
+
+	@media (max-width: 480px) {
+		.normal-controls { flex-direction: column; }
+	}
+</style>

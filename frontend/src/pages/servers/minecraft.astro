@@ -1,0 +1,221 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import MetricCard from "../../components/MetricCard.astro";
+import PlayerList from "../../components/PlayerList.astro";
+import ServerControls from "../../components/ServerControls.astro";
+import { minecraftIdentity } from "../../lib/minecraft";
+---
+
+<Layout title="Minecraft Server | Kenek's Homelab">
+	<div class="dashboard-shell" data-minecraft-management>
+		<Sidebar />
+
+		<main>
+			<div class="management-content">
+				<a class="back-link" href="/">← Back to servers</a>
+
+				<header class="page-header">
+					<div>
+						<p>{minecraftIdentity.game} {minecraftIdentity.version}</p>
+						<h1>Minecraft Server</h1>
+					</div>
+					<div class="lifecycle-status unavailable" data-lifecycle-status role="status" aria-live="polite">
+						<span aria-hidden="true"></span>
+						Checking...
+					</div>
+				</header>
+
+				<section class="overview-card" aria-label="Minecraft server overview">
+					<div class="metrics">
+						<MetricCard label="Players" value="--" dataKey="players" />
+						<MetricCard label="Uptime" value="--" dataKey="uptime" />
+						<MetricCard label="RAM" value="--" dataKey="memory" />
+						<MetricCard label="CPU" value="--" dataKey="cpu" />
+					</div>
+
+					<div class="players-section">
+						<h2>Active Players</h2>
+						<div data-player-list aria-live="polite">
+							<PlayerList />
+						</div>
+					</div>
+				</section>
+
+				<ServerControls />
+			</div>
+		</main>
+	</div>
+
+	<script src="../../scripts/minecraft-management.ts"></script>
+</Layout>
+
+<style>
+	main {
+		min-height: 100vh;
+		margin-left: 17.5rem;
+	}
+
+	.management-content {
+		width: min(100%, 68rem);
+		padding: 4rem clamp(2rem, 5vw, 5rem);
+	}
+
+	.back-link {
+		display: inline-block;
+		margin-bottom: 2rem;
+		color: var(--text-muted);
+		font-size: 0.8rem;
+		font-weight: 600;
+		text-decoration: none;
+		transition: color 160ms ease;
+	}
+
+	.back-link:hover {
+		color: var(--text-primary);
+	}
+
+	.page-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1.5rem;
+		margin-bottom: 2rem;
+	}
+
+	.page-header p {
+		margin: 0 0 0.55rem;
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.page-header h1 {
+		margin: 0;
+		font-size: clamp(2rem, 3vw, 2.8rem);
+		font-weight: 640;
+		letter-spacing: -0.045em;
+		line-height: 1;
+	}
+
+	.lifecycle-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		border: 1px solid;
+		border-radius: 999px;
+		padding: 0.45rem 0.7rem;
+		font-size: 0.7rem;
+		font-weight: 750;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.lifecycle-status span {
+		width: 0.42rem;
+		height: 0.42rem;
+		border-radius: 999px;
+		background: currentColor;
+	}
+
+	.lifecycle-status.online {
+		border-color: rgb(52 211 153 / 22%);
+		background: rgb(52 211 153 / 8%);
+		color: var(--online);
+	}
+
+	.lifecycle-status.offline,
+	.lifecycle-status.error {
+		border-color: rgb(248 113 113 / 20%);
+		background: rgb(248 113 113 / 7%);
+		color: var(--offline);
+	}
+
+	.lifecycle-status.starting,
+	.lifecycle-status.stopping,
+	.lifecycle-status.restarting,
+	.lifecycle-status.unavailable {
+		border-color: rgb(161 161 170 / 22%);
+		background: rgb(161 161 170 / 7%);
+		color: var(--text-secondary);
+	}
+
+	.overview-card {
+		border: 1px solid var(--border-strong);
+		border-radius: 1rem;
+		background: var(--surface-card);
+		padding: 1.5rem;
+		box-shadow: 0 18px 45px rgb(0 0 0 / 16%);
+		margin-bottom: 1.25rem;
+	}
+
+	.metrics {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+
+	.players-section {
+		margin-top: 2rem;
+		border-top: 1px solid var(--border);
+		padding-top: 1.5rem;
+	}
+
+	.players-section h2 {
+		margin: 0 0 1rem;
+		font-size: 0.92rem;
+		font-weight: 650;
+	}
+
+	:global([data-player-list] p) {
+		margin: 0;
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	:global([data-player-list] ul) {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	:global([data-player-list] li) {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		color: var(--text-secondary);
+		font-size: 0.875rem;
+	}
+
+	:global([data-player-list] li span) {
+		display: grid;
+		width: 1.8rem;
+		height: 1.8rem;
+		place-items: center;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--surface-raised);
+		color: var(--text-primary);
+		font-size: 0.7rem;
+		font-weight: 700;
+	}
+
+	@media (max-width: 850px) {
+		.metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	}
+
+	@media (max-width: 760px) {
+		main { margin-left: 0; }
+		.management-content { padding: 2.5rem 1.25rem; }
+	}
+
+	@media (max-width: 480px) {
+		.page-header { align-items: flex-start; flex-direction: column; }
+		:global([data-player-list] ul) { grid-template-columns: 1fr; }
+	}
+</style>

@@ -1,6 +1,11 @@
-import type { MinecraftStatusResponse } from "../types/api";
+import type {
+	MinecraftAction,
+	MinecraftActionResponse,
+	MinecraftStatusResponse,
+} from "../types/api";
 
-const REQUEST_TIMEOUT_MS = 4_000;
+const STATUS_REQUEST_TIMEOUT_MS = 4_000;
+const ACTION_REQUEST_TIMEOUT_MS = 30_000;
 
 const isFiniteNumber = (value: unknown): value is number => {
 	return typeof value === "number" && Number.isFinite(value);
@@ -41,7 +46,7 @@ export const getMinecraftStatus = async (): Promise<MinecraftStatusResponse> => 
 			Accept: "application/json",
 		},
 		cache: "no-store",
-		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+		signal: AbortSignal.timeout(STATUS_REQUEST_TIMEOUT_MS),
 	});
 
 	if (!response.ok) {
@@ -56,3 +61,47 @@ export const getMinecraftStatus = async (): Promise<MinecraftStatusResponse> => 
 
 	return data;
 };
+
+const sendMinecraftAction = async (
+	action: MinecraftAction,
+): Promise<MinecraftActionResponse> => {
+	const response = await fetch(`${getApiBaseUrl()}/api/${action}`, {
+		method: "POST",
+		headers: {
+			Accept: "application/json",
+		},
+		cache: "no-store",
+		signal: AbortSignal.timeout(ACTION_REQUEST_TIMEOUT_MS),
+	});
+
+	if (!response.ok) {
+		throw new Error(`Minecraft ${action} request failed with HTTP ${response.status}`);
+	}
+
+	const data: unknown = await response.json();
+
+	if (
+		typeof data !== "object" ||
+		data === null ||
+		typeof (data as Record<string, unknown>).success !== "boolean"
+	) {
+		throw new Error(`Minecraft ${action} response has an unexpected shape`);
+	}
+
+	const actionResponse = data as MinecraftActionResponse;
+
+	if (!actionResponse.success) {
+		throw new Error(`The backend could not ${action} the Minecraft service`);
+	}
+
+	return actionResponse;
+};
+
+export const startMinecraftServer = (): Promise<MinecraftActionResponse> =>
+	sendMinecraftAction("start");
+
+export const stopMinecraftServer = (): Promise<MinecraftActionResponse> =>
+	sendMinecraftAction("stop");
+
+export const restartMinecraftServer = (): Promise<MinecraftActionResponse> =>
+	sendMinecraftAction("restart");

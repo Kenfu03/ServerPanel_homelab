@@ -12,6 +12,7 @@ const { id, name, game, version, online } = server;
 
 const gameLabel = version ? `${game} ${version}` : game;
 const displayValues = getServerDisplayValues(server);
+const manageHref = id === "minecraft" ? "/servers/minecraft" : "#";
 ---
 
 <article class:list={["server-card", { offline: !online }]} data-server-id={id}>
@@ -45,7 +46,7 @@ const displayValues = getServerDisplayValues(server);
 	</div>
 
 	<footer>
-		<a class="manage-button" href="#" aria-label={`Manage ${name} server`}>
+		<a class="manage-button" href={manageHref} aria-label={`Manage ${name} server`}>
 			Manage Server
 			<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
 				<path d="m7.5 5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />

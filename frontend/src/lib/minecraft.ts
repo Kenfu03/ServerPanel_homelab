@@ -1,7 +1,7 @@
 import type { MinecraftStatusResponse } from "../types/api";
 import type { GameServer } from "../types/server";
 
-const minecraftIdentity = {
+export const minecraftIdentity = {
 	id: "minecraft",
 	name: "Minecraft",
 	game: "Minecraft",

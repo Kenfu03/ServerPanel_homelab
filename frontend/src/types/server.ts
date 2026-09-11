@@ -19,3 +19,11 @@ export interface GameServer {
 	players: ServerPlayers;
 	metrics: ServerMetrics;
 }
+
+export type ServerLifecycleState =
+	| "offline"
+	| "starting"
+	| "online"
+	| "stopping"
+	| "restarting"
+	| "error";

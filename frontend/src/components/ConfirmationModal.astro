@@ -1,0 +1,100 @@
+---
+interface Props {
+	action: "stop" | "restart";
+}
+
+const { action } = Astro.props;
+const title = action === "stop" ? "Stop Minecraft Server?" : "Restart Minecraft Server?";
+const buttonLabel = action === "stop" ? "Stop Server" : "Restart Server";
+---
+
+<dialog class="confirmation-modal" data-confirmation={action} aria-labelledby={`${action}-title`}>
+	<form method="dialog">
+		<h2 id={`${action}-title`}>{title}</h2>
+		<p>Players currently online: <strong data-modal-player-count>0</strong></p>
+		{
+			action === "stop" && (
+				<p class="warning">Stopping the server will disconnect all active players.</p>
+			)
+		}
+		<div class="modal-actions">
+			<button class="cancel-button" value="cancel">Cancel</button>
+			<button class:list={["confirm-button", action]} value="confirm" data-confirm-action={action}>
+				{buttonLabel}
+			</button>
+		</div>
+	</form>
+</dialog>
+
+<style>
+	.confirmation-modal {
+		width: min(calc(100% - 2rem), 28rem);
+		border: 1px solid var(--border-strong);
+		border-radius: 1rem;
+		background: var(--surface-card);
+		padding: 0;
+		color: var(--text-primary);
+		box-shadow: 0 24px 80px rgb(0 0 0 / 55%);
+	}
+
+	.confirmation-modal::backdrop {
+		background: rgb(0 0 0 / 66%);
+		backdrop-filter: blur(3px);
+	}
+
+	form {
+		padding: 1.5rem;
+	}
+
+	h2 {
+		margin: 0 0 1rem;
+		font-size: 1.2rem;
+		letter-spacing: -0.02em;
+	}
+
+	p {
+		margin: 0.5rem 0;
+		color: var(--text-secondary);
+		font-size: 0.875rem;
+		line-height: 1.55;
+	}
+
+	p strong {
+		color: var(--text-primary);
+	}
+
+	.warning {
+		color: var(--text-muted);
+	}
+
+	.modal-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.65rem;
+		margin-top: 1.5rem;
+	}
+
+	button {
+		border: 1px solid var(--border-strong);
+		border-radius: 0.65rem;
+		padding: 0.7rem 1rem;
+		color: var(--text-primary);
+		font-size: 0.8rem;
+		font-weight: 650;
+		cursor: pointer;
+	}
+
+	.cancel-button {
+		background: var(--surface-raised);
+	}
+
+	.confirm-button {
+		background: #26292f;
+	}
+
+	.confirm-button.stop {
+		border-color: rgb(248 113 113 / 35%);
+		background: rgb(248 113 113 / 12%);
+		color: #fca5a5;
+	}
+</style>
