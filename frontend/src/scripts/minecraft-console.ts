@@ -3,6 +3,7 @@ import type { CurrentUser } from "../types/auth";
 
 const CONSOLE_POLL_INTERVAL_MS = 2_000;
 const NEAR_BOTTOM_THRESHOLD_PX = 80;
+const DESKTOP_COMMAND_FOCUS_QUERY = "(min-width: 768px) and (hover: hover) and (pointer: fine)";
 
 interface MinecraftStatusEventDetail {
 	online: boolean;
@@ -31,6 +32,7 @@ if (root) {
 	let commandPending = false;
 	let hasReceivedLogs = false;
 	let pollTimer: number | null = null;
+	let commandFocusPending = false;
 	let feedbackSource: "logs" | "command" | null = null;
 	const commandHistory: string[] = [];
 	let historyIndex = 0;
@@ -77,6 +79,16 @@ if (root) {
 			sendButton.disabled = disabled;
 			sendButton.textContent = commandPending ? "Sending..." : "Send";
 		}
+		focusCommandInputIfReady();
+	};
+
+	const shouldAutoFocusCommand = (): boolean =>
+		window.matchMedia(DESKTOP_COMMAND_FOCUS_QUERY).matches;
+
+	const focusCommandInputIfReady = (): void => {
+		if (!commandFocusPending || activeView !== "console" || !input || input.disabled) return;
+		commandFocusPending = false;
+		input.focus({ preventScroll: true });
 	};
 
 	const shouldPoll = (): boolean =>
@@ -150,8 +162,10 @@ if (root) {
 		if (view === "console") {
 			clearPollTimer();
 			void pollLogs();
-			input?.focus();
+			commandFocusPending = shouldAutoFocusCommand();
+			focusCommandInputIfReady();
 		} else {
+			commandFocusPending = false;
 			clearPollTimer();
 		}
 	};
@@ -170,7 +184,7 @@ if (root) {
 			for (const element of root.querySelectorAll<HTMLElement>("[data-admin-only]")) {
 				element.hidden = false;
 			}
-			if (window.location.hash === "#console") selectView("console");
+			selectView(window.location.hash === "#console" ? "console" : "overview");
 		}
 		renderCommandAvailability();
 	});
@@ -191,6 +205,8 @@ if (root) {
 			clearPollTimer();
 		}
 	});
+
+	window.addEventListener("pagehide", clearPollTimer);
 
 	input?.addEventListener("keydown", (event: KeyboardEvent) => {
 		if (commandHistory.length === 0 || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
@@ -236,7 +252,7 @@ if (root) {
 		} finally {
 			commandPending = false;
 			renderCommandAvailability();
-			input.focus();
+			if (shouldAutoFocusCommand()) input.focus({ preventScroll: true });
 		}
 	});
 

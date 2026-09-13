@@ -99,6 +99,61 @@ async def test_admin_can_read_recent_log_lines(
 
 
 @pytest.mark.anyio
+async def test_console_filters_rcon_bookkeeping_and_preserves_useful_logs(
+    client: httpx2.AsyncClient,
+    tmp_path: Path,
+) -> None:
+    log_path = tmp_path / "latest.log"
+    useful_lines = [
+        "[12:00:00] [Server thread/INFO]: <Alex> hello everyone",
+        "[12:00:01] [Server thread/INFO]: Alex joined the game",
+        "[12:00:02] [Server thread/INFO]: Alex left the game",
+        "[12:00:03] [Server thread/WARN]: Can't keep up!",
+        "[12:00:04] [Server thread/ERROR]: Example mod error",
+        "[12:00:05] [Server thread/INFO]: Saving the game (this may take a moment!)",
+        "[12:00:06] [Server thread/INFO]: RCON command returned 3 players",
+    ]
+    noise_lines = [
+        "[12:00:07] [RCON Listener #1/INFO]: Thread RCON Client /127.0.0.1 started",
+        "[12:00:08] [RCON Client /127.0.0.1 #240/INFO]: Thread RCON Client /127.0.0.1 shutting down",
+        "[12:00:09] [minecraft/RconClient/INFO]: Thread RCON Client /127.0.0.1 started",
+    ]
+    log_path.write_text("\n".join(useful_lines + noise_lines) + "\n")
+    await login_admin(client)
+
+    with patch.object(main_module, "MINECRAFT_LOG_PATH", log_path):
+        response = await client.get("/api/console/logs")
+
+    assert response.status_code == 200
+    assert response.json()["lines"] == useful_lines
+
+
+@pytest.mark.anyio
+async def test_console_reads_past_rcon_noise_for_latest_useful_lines(
+    client: httpx2.AsyncClient,
+    tmp_path: Path,
+) -> None:
+    log_path = tmp_path / "latest.log"
+    useful_lines = [
+        f"[12:00:{index % 60:02d}] [Server thread/INFO]: useful-{index:03d}"
+        for index in range(250)
+    ]
+    noise_lines = [
+        f"[12:01:{index % 60:02d}] [RCON Client /127.0.0.1 #{index}/INFO]: "
+        "Thread RCON Client /127.0.0.1 shutting down"
+        for index in range(600)
+    ]
+    log_path.write_text("\n".join(useful_lines + noise_lines) + "\n")
+    await login_admin(client)
+
+    with patch.object(main_module, "MINECRAFT_LOG_PATH", log_path):
+        response = await client.get("/api/console/logs")
+
+    assert response.status_code == 200
+    assert response.json()["lines"] == useful_lines[-200:]
+
+
+@pytest.mark.anyio
 async def test_missing_log_file_is_handled(
     client: httpx2.AsyncClient,
     tmp_path: Path,

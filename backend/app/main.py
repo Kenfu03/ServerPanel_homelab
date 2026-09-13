@@ -55,6 +55,15 @@ CONSOLE_LOG_LINE_COUNT = 200
 CONSOLE_LOG_MAX_BYTES = 1024 * 1024
 MAX_CONSOLE_COMMAND_LENGTH = 1024
 
+RCON_CONNECTION_SOURCE_PATTERN = re.compile(
+    r"\[(?:(?:[^\]/\s]+/)?RconClient|RCON Listener|RCON Client)\b[^\]]*\]",
+    re.IGNORECASE,
+)
+RCON_CLIENT_LIFECYCLE_PATTERN = re.compile(
+    r"\bThread RCON Client\b.*\b(?:started|shutting down)\b",
+    re.IGNORECASE,
+)
+
 
 class ConsoleCommandRequest(BaseModel):
     command: str
@@ -74,36 +83,60 @@ class ConsoleCommandRequest(BaseModel):
         return command
 
 
+def is_internal_rcon_connection_line(line: str) -> bool:
+    """Identify Minecraft's repetitive RCON connection lifecycle bookkeeping."""
+    return bool(
+        RCON_CONNECTION_SOURCE_PATTERN.search(line)
+        or RCON_CLIENT_LIFECYCLE_PATTERN.search(line)
+    )
+
+
 def tail_log_file(path: Path, line_count: int = CONSOLE_LOG_LINE_COUNT) -> list[str]:
-    """Read the last lines of a log without loading the entire file."""
+    """Read the last useful log lines without loading the entire file."""
     if line_count <= 0:
         return []
 
     chunk_size = 8192
-    data = b""
+    pending_line = b""
+    useful_lines_reversed: list[str] = []
 
     with path.open("rb") as log_file:
         log_file.seek(0, os.SEEK_END)
         position = log_file.tell()
         bytes_read = 0
+        reading_file_end = True
 
         while (
             position > 0
-            and data.count(b"\n") <= line_count
+            and len(useful_lines_reversed) < line_count
             and bytes_read < CONSOLE_LOG_MAX_BYTES
         ):
             read_size = min(chunk_size, position, CONSOLE_LOG_MAX_BYTES - bytes_read)
             position -= read_size
             bytes_read += read_size
             log_file.seek(position)
-            data = log_file.read(read_size) + data
+            parts = (log_file.read(read_size) + pending_line).split(b"\n")
+            pending_line = parts[0]
+            complete_lines = parts[1:]
 
-    lines = data.splitlines()
-    if position > 0 and lines:
-        # The first line is partial when reading stopped before the start of the file.
-        lines = lines[1:]
+            # A final newline produces an empty split item, not an empty log line.
+            if reading_file_end and complete_lines and complete_lines[-1] == b"":
+                complete_lines.pop()
+            reading_file_end = False
 
-    return [line.decode("utf-8", errors="replace") for line in lines[-line_count:]]
+            for raw_line in reversed(complete_lines):
+                line = raw_line.rstrip(b"\r").decode("utf-8", errors="replace")
+                if not is_internal_rcon_connection_line(line):
+                    useful_lines_reversed.append(line)
+                    if len(useful_lines_reversed) == line_count:
+                        break
+
+        if position == 0 and len(useful_lines_reversed) < line_count:
+            first_line = pending_line.rstrip(b"\r").decode("utf-8", errors="replace")
+            if first_line and not is_internal_rcon_connection_line(first_line):
+                useful_lines_reversed.append(first_line)
+
+    return list(reversed(useful_lines_reversed))
 
 
 def execute_rcon_command(command: str) -> str:
