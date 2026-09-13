@@ -34,13 +34,17 @@ const isMinecraftStatusResponse = (value: unknown): value is MinecraftStatusResp
 };
 
 const getApiBaseUrl = (): string => {
-	const apiBaseUrl = import.meta.env.PUBLIC_API_URL?.trim();
+    const apiBaseUrl = import.meta.env.PUBLIC_API_URL?.trim();
 
-	if (!apiBaseUrl) {
-		throw new Error("PUBLIC_API_URL is not configured");
-	}
+    if (import.meta.env.DEV) {
+        if (!apiBaseUrl) {
+            throw new Error("PUBLIC_API_URL is not configured");
+        }
 
-	return import.meta.env.DEV ? "" : apiBaseUrl.replace(/\/+$/, "");
+        return apiBaseUrl.replace(/\/+$/, "");
+    }
+
+    return "";
 };
 
 const apiFetch = (path: string, init: RequestInit = {}): Promise<Response> => {
