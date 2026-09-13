@@ -26,29 +26,74 @@ import { minecraftIdentity } from "../../lib/minecraft";
 					</div>
 				</header>
 
-				<section class="overview-card" aria-label="Minecraft server overview">
-					<div class="metrics">
-						<MetricCard label="Players" value="--" dataKey="players" />
-						<MetricCard label="Uptime" value="--" dataKey="uptime" />
-						<MetricCard label="RAM" value="--" dataKey="memory" />
-						<MetricCard label="CPU" value="--" dataKey="cpu" />
-					</div>
+				<nav class="management-tabs" aria-label="Minecraft management sections">
+					<button class="management-tab active" type="button" data-view-tab="overview" aria-selected="true">
+						Overview
+					</button>
+					<button class="management-tab" type="button" data-view-tab="console" data-admin-only hidden aria-selected="false">
+						Console
+					</button>
+					<button class="management-tab coming-soon" type="button" data-admin-only hidden disabled title="Coming later">
+						Backups <span>Coming later</span>
+					</button>
+				</nav>
 
-					<div class="players-section">
-						<h2>Active Players</h2>
-						<div data-player-list aria-live="polite">
-							<PlayerList />
+				<div data-view-panel="overview">
+					<section class="overview-card" aria-label="Minecraft server overview">
+						<div class="metrics">
+							<MetricCard label="Players" value="--" dataKey="players" />
+							<MetricCard label="Uptime" value="--" dataKey="uptime" />
+							<MetricCard label="RAM" value="--" dataKey="memory" />
+							<MetricCard label="CPU" value="--" dataKey="cpu" />
 						</div>
-					</div>
-				</section>
 
-				<ServerControls />
+						<div class="players-section">
+							<h2>Active Players</h2>
+							<div data-player-list aria-live="polite">
+								<PlayerList />
+							</div>
+						</div>
+					</section>
+
+					<ServerControls />
+				</div>
+
+				<section class="console-panel" data-view-panel="console" data-admin-only hidden aria-label="Minecraft console">
+					<header class="console-header">
+						<div>
+							<span class="console-dot" aria-hidden="true"></span>
+							<h2>Live Console</h2>
+						</div>
+						<span class="console-connection checking" data-console-connection role="status" aria-live="polite">
+							Checking...
+						</span>
+					</header>
+
+					<pre class="console-output" data-console-output tabindex="0" aria-label="Recent Minecraft log output">Waiting for console logs...</pre>
+
+					<form class="console-command" data-console-form>
+						<label for="minecraft-command" class="command-prompt" aria-label="Minecraft command">&gt;</label>
+						<input
+							id="minecraft-command"
+							data-console-input
+							type="text"
+							maxlength="1024"
+							autocomplete="off"
+							spellcheck="false"
+							placeholder="Enter a Minecraft command"
+							disabled
+						/>
+						<button type="submit" data-console-send disabled>Send</button>
+					</form>
+					<p class="console-feedback" data-console-feedback hidden aria-live="polite"></p>
+				</section>
 			</div>
 		</main>
 	</div>
 
 	<script src="../../scripts/auth-session.ts"></script>
 	<script src="../../scripts/minecraft-management.ts"></script>
+	<script src="../../scripts/minecraft-console.ts"></script>
 </Layout>
 
 <style>
@@ -99,6 +144,49 @@ import { minecraftIdentity } from "../../lib/minecraft";
 		font-weight: 640;
 		letter-spacing: -0.045em;
 		line-height: 1;
+	}
+
+	.management-tabs {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		margin-bottom: 1.25rem;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.management-tab {
+		position: relative;
+		border: 0;
+		background: transparent;
+		padding: 0.8rem 0.9rem;
+		color: var(--text-muted);
+		font-size: 0.8rem;
+		font-weight: 650;
+		cursor: pointer;
+	}
+
+	.management-tab:hover:not(:disabled),
+	.management-tab.active {
+		color: var(--text-primary);
+	}
+
+	.management-tab.active::after {
+		position: absolute;
+		inset: auto 0 -1px;
+		height: 2px;
+		background: var(--online);
+		content: "";
+	}
+
+	.management-tab.coming-soon {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+
+	.management-tab span {
+		margin-left: 0.3rem;
+		font-size: 0.58rem;
+		font-weight: 600;
 	}
 
 	.lifecycle-status {
@@ -168,6 +256,136 @@ import { minecraftIdentity } from "../../lib/minecraft";
 		margin: 0 0 1rem;
 		font-size: 0.92rem;
 		font-weight: 650;
+	}
+
+	.console-panel {
+		overflow: hidden;
+		border: 1px solid var(--border-strong);
+		border-radius: 1rem;
+		background: #0c0e10;
+		box-shadow: 0 18px 45px rgb(0 0 0 / 20%);
+	}
+
+	.console-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		border-bottom: 1px solid var(--border);
+		background: var(--surface-card);
+		padding: 1rem 1.15rem;
+	}
+
+	.console-header > div {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+	}
+
+	.console-header h2 {
+		margin: 0;
+		font-size: 0.9rem;
+		font-weight: 650;
+	}
+
+	.console-dot {
+		width: 0.48rem;
+		height: 0.48rem;
+		border-radius: 999px;
+		background: var(--online);
+		box-shadow: 0 0 0 4px rgb(52 211 153 / 8%);
+	}
+
+	.console-connection {
+		color: var(--online);
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.035em;
+		text-transform: uppercase;
+	}
+
+	.console-connection.offline,
+	.console-connection.disconnected {
+		color: var(--offline);
+	}
+
+	.console-connection.checking,
+	.console-connection.unavailable {
+		color: var(--text-muted);
+	}
+
+	.console-output {
+		height: clamp(21rem, 53vh, 37rem);
+		overflow: auto;
+		margin: 0;
+		padding: 1.1rem 1.2rem;
+		background: #090b0d;
+		color: #c9cdd3;
+		font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+		font-size: 0.78rem;
+		line-height: 1.7;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	.console-command {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		border-top: 1px solid var(--border);
+		background: var(--surface-card);
+		padding: 0.8rem;
+	}
+
+	.command-prompt {
+		color: var(--online);
+		font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+		font-weight: 700;
+	}
+
+	.console-command input {
+		min-width: 0;
+		flex: 1;
+		border: 0;
+		background: transparent;
+		color: var(--text-primary);
+		font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+		font-size: 0.82rem;
+		outline: 0;
+	}
+
+	.console-command input:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+
+	.console-command button {
+		border: 1px solid rgb(52 211 153 / 30%);
+		border-radius: 0.55rem;
+		background: rgb(52 211 153 / 10%);
+		padding: 0.5rem 0.85rem;
+		color: var(--online);
+		font-size: 0.75rem;
+		font-weight: 700;
+		cursor: pointer;
+	}
+
+	.console-command button:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+	}
+
+	.console-feedback {
+		margin: 0;
+		border-top: 1px solid var(--border);
+		background: var(--surface-card);
+		padding: 0.65rem 1.15rem;
+		color: var(--text-muted);
+		font-size: 0.75rem;
+	}
+
+	.console-feedback.error {
+		color: var(--offline);
 	}
 
 	:global([data-player-list] p) {

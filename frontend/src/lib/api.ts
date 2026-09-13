@@ -1,6 +1,8 @@
 import type {
 	MinecraftAction,
 	MinecraftActionResponse,
+	MinecraftCommandResponse,
+	MinecraftConsoleLogsResponse,
 	MinecraftStatusResponse,
 	IdentifyResponse,
 } from "../types/api";
@@ -133,6 +135,56 @@ export const stopMinecraftServer = (): Promise<MinecraftActionResponse> =>
 
 export const restartMinecraftServer = (): Promise<MinecraftActionResponse> =>
 	sendMinecraftAction("restart");
+
+export const getMinecraftConsoleLogs = async (): Promise<MinecraftConsoleLogsResponse> => {
+	const response = await apiFetch("/api/console/logs", {
+		headers: { Accept: "application/json" },
+		cache: "no-store",
+		signal: AbortSignal.timeout(STATUS_REQUEST_TIMEOUT_MS),
+	});
+	const data = await readJson(response, "Minecraft console logs request");
+
+	if (typeof data !== "object" || data === null) {
+		throw new Error("Minecraft console logs response has an unexpected shape");
+	}
+	const result = data as Record<string, unknown>;
+	if (
+		!Array.isArray(result.lines) ||
+		!result.lines.every((line: unknown) => typeof line === "string") ||
+		typeof result.available !== "boolean" ||
+		!(typeof result.message === "string" || result.message === null)
+	) {
+		throw new Error("Minecraft console logs response has an unexpected shape");
+	}
+
+	return {
+		lines: result.lines,
+		available: result.available,
+		message: result.message,
+	};
+};
+
+export const sendMinecraftCommand = async (
+	command: string,
+): Promise<MinecraftCommandResponse> => {
+	const response = await apiFetch("/api/console/command", {
+		method: "POST",
+		headers: { "Content-Type": "application/json", Accept: "application/json" },
+		body: JSON.stringify({ command }),
+		signal: AbortSignal.timeout(ACTION_REQUEST_TIMEOUT_MS),
+	});
+	const data = await readJson(response, "Minecraft console command");
+
+	if (typeof data !== "object" || data === null) {
+		throw new Error("Minecraft console command response has an unexpected shape");
+	}
+	const result = data as Record<string, unknown>;
+	if (result.success !== true || typeof result.response !== "string") {
+		throw new Error("Minecraft console command response has an unexpected shape");
+	}
+
+	return { success: true, response: result.response };
+};
 
 export const identifyUser = async (name: string): Promise<IdentifyResponse> => {
 	const response = await apiFetch("/api/auth/identify", {

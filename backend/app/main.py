@@ -2,14 +2,17 @@ import os
 import re
 import subprocess
 import time
+from pathlib import Path
+
 import psutil
 
-from fastapi import Depends, Response, status as http_status
+from fastapi import Depends, HTTPException, Response, status as http_status
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from mctools import RCONClient
+from pydantic import BaseModel, field_validator
 
 from .auth import (
     AdminLoginRequest,
@@ -20,6 +23,7 @@ from .auth import (
     get_session_user,
     is_reserved_admin_name,
     normalize_name,
+    require_admin,
     require_user,
     set_session_cookie,
     verify_admin_password,
@@ -44,6 +48,79 @@ app.add_middleware(
 RCON_HOST = os.getenv("RCON_HOST", "127.0.0.1")
 RCON_PORT = int(os.getenv("RCON_PORT", "25575"))
 RCON_PASSWORD = os.getenv("RCON_PASSWORD")
+MINECRAFT_LOG_PATH = Path(
+    os.getenv("MINECRAFT_LOG_PATH", "/opt/minecraft/server/logs/latest.log")
+)
+CONSOLE_LOG_LINE_COUNT = 200
+CONSOLE_LOG_MAX_BYTES = 1024 * 1024
+MAX_CONSOLE_COMMAND_LENGTH = 1024
+
+
+class ConsoleCommandRequest(BaseModel):
+    command: str
+
+    @field_validator("command")
+    @classmethod
+    def validate_command(cls, value: str) -> str:
+        command = value.strip()
+        if not command:
+            raise ValueError("Command is required")
+        if len(command) > MAX_CONSOLE_COMMAND_LENGTH:
+            raise ValueError(
+                f"Command must be at most {MAX_CONSOLE_COMMAND_LENGTH} characters"
+            )
+        if "\n" in command or "\r" in command:
+            raise ValueError("Command must be a single line")
+        return command
+
+
+def tail_log_file(path: Path, line_count: int = CONSOLE_LOG_LINE_COUNT) -> list[str]:
+    """Read the last lines of a log without loading the entire file."""
+    if line_count <= 0:
+        return []
+
+    chunk_size = 8192
+    data = b""
+
+    with path.open("rb") as log_file:
+        log_file.seek(0, os.SEEK_END)
+        position = log_file.tell()
+        bytes_read = 0
+
+        while (
+            position > 0
+            and data.count(b"\n") <= line_count
+            and bytes_read < CONSOLE_LOG_MAX_BYTES
+        ):
+            read_size = min(chunk_size, position, CONSOLE_LOG_MAX_BYTES - bytes_read)
+            position -= read_size
+            bytes_read += read_size
+            log_file.seek(position)
+            data = log_file.read(read_size) + data
+
+    lines = data.splitlines()
+    if position > 0 and lines:
+        # The first line is partial when reading stopped before the start of the file.
+        lines = lines[1:]
+
+    return [line.decode("utf-8", errors="replace") for line in lines[-line_count:]]
+
+
+def execute_rcon_command(command: str) -> str:
+    if not RCON_PASSWORD:
+        raise RuntimeError("RCON is not configured")
+
+    client = RCONClient(RCON_HOST, port=RCON_PORT)
+    try:
+        if not client.login(RCON_PASSWORD):
+            raise RuntimeError("RCON authentication failed")
+        response = client.command(command)
+        return "" if response is None else str(response)
+    finally:
+        try:
+            client.stop()
+        except Exception:
+            pass
 
 def get_minecraft_process():
     for process in psutil.process_iter(["pid", "name", "cmdline"]):
@@ -248,3 +325,41 @@ def stop(_user: SessionUser = Depends(require_user)):
 @app.post("/api/restart")
 def restart(_user: SessionUser = Depends(require_user)):
     return {"success": minecraft_command("restart")}
+
+
+@app.get("/api/console/logs")
+def console_logs(_admin: SessionUser = Depends(require_admin)):
+    try:
+        lines = tail_log_file(MINECRAFT_LOG_PATH)
+    except FileNotFoundError:
+        return {
+            "lines": [],
+            "available": False,
+            "message": "Minecraft latest.log is not available yet.",
+        }
+    except OSError as error:
+        print(f"Minecraft log read failed: {error}")
+        return {
+            "lines": [],
+            "available": False,
+            "message": "Minecraft latest.log cannot be read.",
+        }
+
+    return {"lines": lines, "available": True, "message": None}
+
+
+@app.post("/api/console/command")
+def console_command(
+    payload: ConsoleCommandRequest,
+    _admin: SessionUser = Depends(require_admin),
+):
+    try:
+        response = execute_rcon_command(payload.command)
+    except Exception as error:
+        print(f"RCON console command failed: {error}")
+        raise HTTPException(
+            status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Minecraft RCON is unavailable",
+        ) from error
+
+    return {"success": True, "response": response}

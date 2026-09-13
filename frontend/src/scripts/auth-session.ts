@@ -23,6 +23,7 @@ if (protectedContent) {
 				element.textContent = user.isAdmin ? "Administrator" : "Normal access";
 			}
 			protectedContent.hidden = false;
+			window.dispatchEvent(new CustomEvent("mcpanel:session-ready", { detail: user }));
 		} catch {
 			window.location.replace(signInUrl());
 		}

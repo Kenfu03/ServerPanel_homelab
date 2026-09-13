@@ -12,6 +12,17 @@ export interface MinecraftActionResponse {
 	success: boolean;
 }
 
+export interface MinecraftConsoleLogsResponse {
+	lines: string[];
+	available: boolean;
+	message: string | null;
+}
+
+export interface MinecraftCommandResponse {
+	success: boolean;
+	response: string;
+}
+
 export type MinecraftAction = "start" | "stop" | "restart";
 
 export interface AuthUserResponse {

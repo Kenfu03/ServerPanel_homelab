@@ -172,6 +172,9 @@ if (root) {
 	const applyAuthoritativeStatus = (nextServer: GameServer): void => {
 		server = nextServer;
 		backendReachable = true;
+		window.dispatchEvent(new CustomEvent("mcpanel:minecraft-status", {
+			detail: { online: server.online, reachable: true },
+		}));
 
 		if (errorKind === "connection") {
 			errorKind = null;
@@ -208,6 +211,9 @@ if (root) {
 		} catch {
 			backendReachable = false;
 			server = createUnavailableMinecraftServer();
+			window.dispatchEvent(new CustomEvent("mcpanel:minecraft-status", {
+				detail: { online: false, reachable: false },
+			}));
 			if (!operation) {
 				lifecycle = "error";
 				errorKind = "connection";

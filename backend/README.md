@@ -31,6 +31,30 @@ SESSION_COOKIE_SAMESITE=lax
 
 Keep the existing `RCON_HOST`, `RCON_PORT`, and `RCON_PASSWORD` values. Restart the FastAPI service after installing dependencies and updating the environment.
 
+## Minecraft console log permissions
+
+The console reads only the server-controlled `MINECRAFT_LOG_PATH`, which defaults to
+`/opt/minecraft/server/logs/latest.log`. The `mcpanel` service user needs read access to
+that file and directory traversal access to its parent directories. Do not use
+world-writable permissions.
+
+On the homelab server, a suitable group-based setup is:
+
+```sh
+sudo usermod -aG minecraft mcpanel
+sudo chgrp -R minecraft /opt/minecraft/server/logs
+sudo find /opt/minecraft/server/logs -type d -exec chmod 2750 {} +
+sudo find /opt/minecraft/server/logs -type f -exec chmod 640 {} +
+```
+
+Because Minecraft recreates `latest.log` during startup/log rotation, configure its
+service umask as `0027` (or otherwise ensure newly created logs remain group-readable),
+then restart both Minecraft and MCPanel after the group membership change. Verify with:
+
+```sh
+sudo -u mcpanel test -r /opt/minecraft/server/logs/latest.log
+```
+
 ### Cookie settings and development origins
 
 `SameSite=Lax` is appropriate when the frontend and API are same-site. During `astro dev`, MCPanel's development-only Vite proxy forwards same-origin browser requests from `/api` to the `PUBLIC_API_URL` homelab backend. This allows the current HTTP development topology to use an HttpOnly Lax cookie without exposing it cross-site. Keep `PUBLIC_API_URL` set to the existing Tailscale backend URL; the proxy target is read from that variable and is not hardcoded.
